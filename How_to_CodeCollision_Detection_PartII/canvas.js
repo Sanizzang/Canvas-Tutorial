@@ -81,32 +81,78 @@ function getDistance(x1, y1, x2, y2){
 	return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
 }
 
-function Circle(x, y, radius, color){
+function Particle(x, y, radius, color){
 	this.x = x;
 	this.y = y;
+	this.velocity = {
+		x: Math.random() - 0.5,
+		y: Math.random() - 0.5
+	}
 	this.radius = radius;
 	this.color = color;
 
 	this.draw = function(){
 		c.beginPath();
 		c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-		c.fillStyle = this.color;
-		c.fill();
+		c.strokeStyle = this.color;
 		c.stroke();
 		c.closePath();
 	}
 
-	this.update = function(){
+	this.update = particles => {
 		
 		this.draw();
+
+		for(let i = 0;i < particles.length;i++){
+			if(this === particles[i]) continue;
+
+			if(getDistance(this.x, this.y, particles[i].x, particles[i].y) - this.radius * 2 < 0){
+				console.log('has collided');
+			}
+		}
+	
+		if(this.x - this.radius <= 0 || this.x + this.radius >= innerWidth){
+			this.velocity.x = -this.velocity.x;
+		}
+
+		if(this.y - this.radius <= 0 || this.y + this.radius >= innerHeight){
+			this.velocity.y = -this.velocity.y;
+		}
+
+		this.x += this.velocity.x;
+		this.y += this.velocity.y;
 	}
 }
 
-let circle1;
-let circle2;
+let particles;
+
 function init(){
-	circle1 = new Circle(300, 300, 100, 'black');
-	circle2 = new Circle(undefined, undefined, 30, 'red');
+	particles = [];
+
+	for(let i = 0;i < 4;i++){
+		const radius = 80;
+		let x = randomIntFromRange(radius, canvas.width - radius);
+		let y = randomIntFromRange(radius, canvas.height - radius);
+		const color = 'blue';
+
+		if(i !== 0){
+			for(let j = 0;j < particles.length;j++){
+				if(getDistance(x, y, particles[j].x, particles[j].y) - radius * 2 < 0){
+					x = randomIntFromRange(radius, canvas.width - radius);
+					y = randomIntFromRange(radius, canvas.height - radius);
+
+					j = -1;
+				}
+			}
+		}
+		
+		particles.push(new Particle(x, y, radius, color));
+
+	}
+
+
+
+
 }
 
 init();
@@ -115,18 +161,7 @@ function animate(){
 	requestAnimationFrame(animate);
 	c.clearRect(0, 0, canvas.width, canvas.height);
 
-	circle1.update();
-	circle2.x = mouse.x;
-	circle2.y = mouse.y;
-	circle2.update();
-
-	if(getDistance(circle1.x, circle1.y, circle2.x, circle2.y) 
-		< circle1.radius + circle2.radius){
-		circle1.color = 'red';
-	}
-	else{
-		circle1.color = 'black';
-	}
+	particles.forEach(particle => {particle.update(particles);});
 
 }
 
